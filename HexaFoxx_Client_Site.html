@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HexaFoxx Client — Minecraft Launcher</title>
+<meta name="description" content="A single launcher for Minecraft Java and Bedrock. Instances, mods, and accounts, no clutter.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0e0e0f; --bg2:#141415;
+    --or:#f07818; --orh:#d96a0e; --orsoft:rgba(240,120,24,.14);
+    --card:#1b1b1c; --card2:#222223; --bdr:#2c2c2e; --bdr-soft:#242426;
+    --ink:#f2f0ee; --muted:#9a9a9c; --muted2:#6c6c6f;
+    --green:#4caf50; --blue:#4488cc;
+    --radius:.9em;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:'Nunito Sans',sans-serif; font-weight:400;
+    line-height:1.5; -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  h1,h2,h3,.disp{font-family:'Nunito',sans-serif; font-weight:900; letter-spacing:-.01em;}
+  a{color:inherit; text-decoration:none;}
+  img{display:block; max-width:100%;}
+  .wrap{max-width:1120px; margin:0 auto; padding:0 1.6em;}
+ 
+  /* ambient glow */
+  .glow{
+    position:fixed; top:-20%; left:50%; transform:translateX(-50%);
+    width:1100px; height:700px; pointer-events:none; z-index:0;
+    background:radial-gradient(ellipse at center, rgba(240,120,24,.16) 0%, rgba(240,120,24,.05) 40%, transparent 70%);
+  }
+ 
+  /* ── NAV ───────────────────────────────────────── */
+  header{
+    position:sticky; top:0; z-index:40;
+    background:rgba(14,14,15,.78); backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--bdr-soft);
+  }
+  nav{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:.95em 1.6em; max-width:1120px; margin:0 auto;
+  }
+  .brand{display:flex; align-items:center; gap:.6em;}
+  .mark{width:2em; height:2em; flex-shrink:0;}
+  .brand span{font-size:1.02em; letter-spacing:-.01em;}
+  .nav-cta{
+    background:var(--or); color:#fff; font-family:'Nunito',sans-serif; font-weight:900;
+    font-size:.82em; padding:.55em 1.1em; border-radius:.55em;
+    transition:background .15s;
+  }
+  .nav-cta:hover{background:var(--orh);}
+ 
+  /* ── HERO ──────────────────────────────────────── */
+  .hero{
+    position:relative; z-index:1;
+    padding:5.5em 0 4em;
+    display:grid; grid-template-columns:1.05fr .95fr; gap:3em; align-items:center;
+  }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:.5em;
+    font-family:'Nunito',sans-serif; font-weight:900; font-size:.72em;
+    color:var(--or); text-transform:uppercase; letter-spacing:1.6px;
+    background:var(--orsoft); border:1px solid rgba(240,120,24,.3);
+    padding:.4em .85em; border-radius:2em; margin-bottom:1.3em;
+  }
+  .eyebrow .dot{width:.4em; height:.4em; border-radius:50%; background:var(--or); animation:pulse 2.2s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;} 50%{opacity:.35;}}
+ 
+  h1{font-size:3.15em; line-height:1.04; margin-bottom:.42em;}
+  h1 .accent{color:var(--or);}
+  .lede{font-size:1.12em; color:var(--muted); max-width:34em; margin-bottom:2em;}
+ 
+  .dl-row{display:flex; align-items:center; gap:1.1em; flex-wrap:wrap; margin-bottom:.9em;}
+  .dl-btn{
+    display:inline-flex; align-items:center; gap:.7em;
+    background:var(--or); color:#fff; font-family:'Nunito',sans-serif; font-weight:900;
+    font-size:1.02em; padding:.95em 1.5em; border-radius:.7em;
+    box-shadow:0 10px 30px -8px rgba(240,120,24,.55);
+    transition:background .15s, transform .1s;
+  }
+  .dl-btn:hover{background:var(--orh); transform:translateY(-1px);}
+  .dl-btn:active{transform:scale(.98);}
+  .dl-btn svg{flex-shrink:0;}
+  .dl-meta{display:flex; flex-direction:column; gap:.15em;}
+  .dl-meta b{font-family:'Nunito',sans-serif; font-weight:900; font-size:.95em;}
+  .dl-meta small{color:rgba(255,255,255,.8); font-size:.72em; font-weight:700;}
+  .dl-sub{font-size:.8em; color:var(--muted2); font-weight:600;}
+  .dl-sub b{color:var(--muted);}
+ 
+  /* mockup */
+  .mockup{
+    position:relative; background:var(--card2); border:1.5px solid var(--bdr);
+    border-radius:1.1em; overflow:hidden;
+    box-shadow:0 40px 80px -30px rgba(0,0,0,.7);
+    transform:rotate(1.1deg);
+  }
+  .mockup:before{
+    content:""; position:absolute; inset:0; border-radius:1.1em; padding:1px;
+    background:linear-gradient(135deg, rgba(240,120,24,.35), transparent 40%);
+    -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor; mask-composite:exclude; pointer-events:none;
+  }
+  .m-bar{
+    display:flex; align-items:center; gap:.5em; padding:.7em .9em;
+    background:#161617; border-bottom:1px solid var(--bdr-soft);
+  }
+  .m-dot{width:.6em; height:.6em; border-radius:50%; background:#3a3a3c;}
+  .m-title{font-family:'Nunito',sans-serif; font-weight:900; font-size:.7em; color:var(--muted2); margin-left:.3em; letter-spacing:.4px;}
+  .m-body{padding:1.3em;}
+  .m-ver{
+    background:var(--card); border:1.5px solid var(--bdr); border-radius:.55em;
+    padding:.7em .9em; font-size:.8em; color:var(--muted); font-weight:700;
+    display:flex; align-items:center; justify-content:space-between; margin-bottom:1em;
+  }
+  .m-ver span:last-child{color:var(--or); font-family:'Nunito',sans-serif; font-weight:900;}
+  .m-instances{display:flex; gap:.6em; margin-bottom:1.1em;}
+  .m-inst{
+    flex:1; background:var(--card); border:1.5px solid var(--bdr); border-radius:.55em;
+    padding:.65em .5em; text-align:center; font-size:.68em; font-weight:800; color:var(--muted2);
+  }
+  .m-inst.on{border-color:var(--or); color:var(--or); background:var(--orsoft);}
+  .m-launch{
+    background:var(--or); color:#fff; text-align:center; font-family:'Nunito',sans-serif;
+    font-weight:900; font-size:.85em; padding:.75em; border-radius:.55em;
+  }
+  .m-foot{
+    display:flex; justify-content:space-between; margin-top:.9em;
+    font-size:.66em; color:var(--muted2); font-weight:700;
+  }
+
+  /* ── SLIDESHOW ─────────────────────────────────── */
+  .slideshow{position:relative; aspect-ratio:1104/818; background:#000;}
+  .slide{
+    position:absolute; inset:0; opacity:0; transition:opacity .5s ease;
+    pointer-events:none;
+  }
+  .slide.active{opacity:1; pointer-events:auto;}
+  .slide img{width:100%; height:100%; object-fit:cover; object-position:top;}
+  .ss-dots{
+    position:absolute; left:50%; bottom:.9em; transform:translateX(-50%);
+    display:flex; gap:.4em; z-index:2;
+  }
+  .ss-dot{
+    width:.5em; height:.5em; border-radius:50%; background:rgba(255,255,255,.35);
+    border:none; padding:0; cursor:pointer; transition:background .2s, transform .2s;
+  }
+  .ss-dot.active{background:var(--or); transform:scale(1.25);}
+  .ss-arrow{
+    position:absolute; top:50%; transform:translateY(-50%); z-index:2;
+    width:2em; height:2em; border-radius:50%; border:none; cursor:pointer;
+    background:rgba(14,14,15,.55); backdrop-filter:blur(4px);
+    display:flex; align-items:center; justify-content:center; color:#fff;
+    opacity:0; transition:opacity .2s, background .2s;
+  }
+  .slideshow:hover .ss-arrow{opacity:1;}
+  .ss-arrow:hover{background:rgba(240,120,24,.75);}
+  .ss-prev{left:.6em;} .ss-next{right:.6em;}
+  .ss-label{
+    position:absolute; top:.7em; left:.8em; z-index:2;
+    font-family:'Nunito',sans-serif; font-weight:900; font-size:.62em;
+    color:#fff; background:rgba(14,14,15,.6); backdrop-filter:blur(4px);
+    padding:.35em .7em; border-radius:1em; letter-spacing:.3px;
+  }
+ 
+  /* ── SECTION HEADS ─────────────────────────────── */
+  .section{padding:4.5em 0; position:relative; z-index:1;}
+  .section-head{max-width:32em; margin-bottom:2.6em;}
+  .section-head .tag{
+    font-family:'Nunito',sans-serif; font-weight:900; font-size:.72em; color:var(--or);
+    text-transform:uppercase; letter-spacing:1.6px; margin-bottom:.6em; display:block;
+  }
+  .section-head h2{font-size:2em; margin-bottom:.4em;}
+  .section-head p{color:var(--muted); font-size:1.02em;}
+ 
+  /* ── FEATURES ──────────────────────────────────── */
+  .feat-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:1em;}
+  .feat{
+    background:var(--card); border:1.5px solid var(--bdr); border-radius:var(--radius);
+    padding:1.5em; transition:border-color .2s, transform .2s;
+  }
+  .feat:hover{border-color:rgba(240,120,24,.4); transform:translateY(-3px);}
+  .feat-icon{
+    width:2.6em; height:2.6em; border-radius:.6em; display:flex; align-items:center; justify-content:center;
+    margin-bottom:1em;
+  }
+  .feat h3{font-size:1em; margin-bottom:.4em; font-weight:900;}
+  .feat p{color:var(--muted); font-size:.86em; line-height:1.55;}
+ 
+  /* ── STEPS ─────────────────────────────────────── */
+  .steps{display:grid; grid-template-columns:repeat(4,1fr); gap:1em; counter-reset:step;}
+  .step{position:relative; padding-top:2.2em;}
+  .step:before{
+    counter-increment:step; content:counter(step);
+    font-family:'Nunito',sans-serif; font-weight:900; font-size:1.6em; color:var(--or);
+    position:absolute; top:0; left:0;
+  }
+  .step:after{
+    content:""; position:absolute; top:.35em; left:2.3em; right:-.5em; height:1.5px;
+    background:linear-gradient(90deg, var(--bdr), transparent);
+  }
+  .step:last-child:after{display:none;}
+  .step h3{font-size:.95em; margin-bottom:.35em;}
+  .step p{color:var(--muted); font-size:.82em; line-height:1.5;}
+ 
+  /* ── CTA BAND ──────────────────────────────────── */
+  .cta-band{
+    background:linear-gradient(135deg, #1c1a17, #1b1b1c);
+    border:1.5px solid rgba(240,120,24,.25); border-radius:1.2em;
+    padding:3em 2.5em; text-align:center; position:relative; overflow:hidden;
+  }
+  .cta-band:before{
+    content:""; position:absolute; width:400px; height:400px; border-radius:50%;
+    background:radial-gradient(circle, rgba(240,120,24,.18), transparent 70%);
+    top:-150px; right:-100px; pointer-events:none;
+  }
+  .cta-band h2{font-size:1.8em; margin-bottom:.5em;}
+  .cta-band p{color:var(--muted); margin-bottom:1.6em;}
+ 
+  /* ── FOOTER ────────────────────────────────────── */
+  footer{border-top:1px solid var(--bdr-soft); padding:2.6em 0; position:relative; z-index:1;}
+  .foot-row{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1em;}
+  .foot-brand{display:flex; align-items:center; gap:.55em; color:var(--muted); font-size:.85em; font-weight:700;}
+  .foot-brand .mark{width:1.4em; height:1.4em;}
+  .foot-disclaim{font-size:.74em; color:var(--muted2); font-weight:600; margin-top:.6em;}
+  .foot-links{display:flex; gap:1.4em; font-size:.85em; font-weight:700; color:var(--muted);}
+  .foot-links a:hover{color:var(--or);}
+ 
+  @media (max-width:880px){
+    .hero{grid-template-columns:1fr; padding-top:3.5em;}
+    h1{font-size:2.3em;}
+    .feat-grid{grid-template-columns:1fr 1fr;}
+    .steps{grid-template-columns:1fr 1fr; row-gap:1.8em;}
+    .mockup{transform:none; max-width:420px;}
+  }
+  @media (max-width:560px){
+    .feat-grid{grid-template-columns:1fr;}
+    .steps{grid-template-columns:1fr;}
+    .step:after{display:none;}
+    .foot-row{flex-direction:column; align-items:flex-start;}
+    nav{padding:.9em 1.2em;}
+    .wrap{padding:0 1.2em;}
+  }
+ 
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none !important; transition:none !important;}
+  }
+ 
+  :focus-visible{outline:2px solid var(--or); outline-offset:2px;}
+</style>
+</head>
+<body>
+ 
+<div class="glow"></div>
+ 
+<header>
+  <nav>
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 40 40" fill="none">
+        <path d="M8 6L16 16H24L32 6L28 20L34 26L26 24L20 34L14 24L6 26L12 20L8 6Z" fill="#f07818"/>
+        <circle cx="20" cy="21" r="3" fill="#0e0e0f"/>
+      </svg>
+      <span class="disp">HexaFoxx</span>
+    </div>
+    <a href="#download" class="nav-cta">Download</a>
+  </nav>
+</header>
+ 
+<main>
+  <section class="wrap hero">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>Windows · Free · No installer</div>
+      <h1>One launcher.<br>Java <span class="accent">and</span> Bedrock.</h1>
+      <p class="lede">HexaFoxx Client puts your instances, mods, and Microsoft account in one clean window — no separate launchers, no digging through folders.</p>
+ 
+      <div class="dl-row" id="download">
+        <a class="dl-btn" href="HexaFoxx_Client_1_0_0.exe" download="HexaFoxx_Client_1_0_0.exe">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><path d="M6 11l6 6 6-6"/><path d="M4 20h16"/></svg>
+          <span class="dl-meta"><b>Download for Windows</b><small>HexaFoxx_Client_1_0_0.exe · 85 MB</small></span>
+        </a>
+      </div>
+      <div class="dl-sub">Portable <b>.exe</b> — no install, no admin rights. Run it from anywhere.</div>
+    </div>
+ 
+    <div class="mockup">
+      <div class="m-bar">
+        <div class="m-dot"></div><div class="m-dot"></div><div class="m-dot"></div>
+        <span class="m-title">HEXAFOXX CLIENT</span>
+      </div>
+      <div class="slideshow" id="slideshow">
+        <div class="ss-label" id="ss-label">Home</div>
+        <div class="slide active"><img src="screenshots/shot-1-home.png" alt="HexaFoxx Client home screen"></div>
+        <div class="slide"><img src="screenshots/shot-2-how-to-use.png" alt="How to use guide"></div>
+        <div class="slide"><img src="screenshots/shot-3-edition.png" alt="Java and Bedrock edition picker"></div>
+        <div class="slide"><img src="screenshots/shot-4-users.png" alt="Microsoft account sign-in"></div>
+        <div class="slide"><img src="screenshots/shot-5-mods.png" alt="Installed mods list"></div>
+        <div class="slide"><img src="screenshots/shot-6-instances.png" alt="Instances manager"></div>
+        <div class="slide"><img src="screenshots/shot-7-settings.png" alt="Settings screen"></div>
+        <div class="slide"><img src="screenshots/shot-8-credits.png" alt="Credits screen"></div>
+        <button class="ss-arrow ss-prev" aria-label="Previous screenshot" onclick="ssMove(-1)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <button class="ss-arrow ss-next" aria-label="Next screenshot" onclick="ssMove(1)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+        <div class="ss-dots" id="ss-dots"></div>
+      </div>
+    </div>
+  </section>
+ 
+  <section class="section wrap">
+    <div class="section-head">
+      <span class="tag">What it does</span>
+      <h2>Built for people who just want to play.</h2>
+      <p>Every feature exists because setting up Minecraft the normal way is annoying.</p>
+    </div>
+    <div class="feat-grid">
+      <div class="feat">
+        <div class="feat-icon" style="background:#3a2a1a"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f07818" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/></svg></div>
+        <h3>Java, bundled Java</h3>
+        <p>Ships with its own Java 25 runtime and finds the right version automatically — no manual JDK installs.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon" style="background:#1a3a2a"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4caf50" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l9 5v10l-9 5-9-5V7z"/></svg></div>
+        <h3>Bedrock, one click</h3>
+        <p>Detects your Bedrock install and launches it straight from the same window as Java.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon" style="background:#1a2a3a"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4488cc" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+        <h3>Microsoft sign-in</h3>
+        <p>Standard device-code login. Your account stays local — nothing leaves your machine but the login itself.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon" style="background:#2a1a3a"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9966cc" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 17l9 4 9-4"/><path d="M3 12l9 4 9-4"/></svg></div>
+        <h3>Instances that stick</h3>
+        <p>Keep separate setups for modded, vanilla, or a friend's server — switch between them without losing configs.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon" style="background:#3a1a1a"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#cc4444" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg></div>
+        <h3>Mods, toggled not lost</h3>
+        <p>Turn mods on and off per instance without touching a file explorer. Delete cleanly when you're done.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon" style="background:#2a2a1a"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ccaa44" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-3-6.7"/><path d="M21 3v6h-6"/></svg></div>
+        <h3>Always current</h3>
+        <p>Checks the Mojang manifest on launch so new releases show up in your version list automatically.</p>
+      </div>
+    </div>
+  </section>
+ 
+  <section class="section wrap">
+    <div class="section-head">
+      <span class="tag">Getting started</span>
+      <h2>Playing in under a minute.</h2>
+    </div>
+    <div class="steps">
+      <div class="step"><h3>Download</h3><p>Grab the portable .exe above. No installer to run.</p></div>
+      <div class="step"><h3>Run it</h3><p>Double-click. Windows may flag it as unrecognized — click "more info" then "run anyway."</p></div>
+      <div class="step"><h3>Sign in</h3><p>Log in with your Microsoft account using the device code flow.</p></div>
+      <div class="step"><h3>Launch</h3><p>Pick a version and instance, hit launch, you're in.</p></div>
+    </div>
+  </section>
+ 
+  <section class="section wrap">
+    <div class="cta-band">
+      <h2 class="disp">Ready when you are.</h2>
+      <p>One exe. No account walls, no bundled extras.</p>
+      <a class="dl-btn" href="HexaFoxx_Client_1_0_0.exe" download="HexaFoxx_Client_1_0_0.exe">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><path d="M6 11l6 6 6-6"/><path d="M4 20h16"/></svg>
+        <span class="dl-meta"><b>Download HexaFoxx Client</b><small>Windows · 85 MB</small></span>
+      </a>
+    </div>
+  </section>
+</main>
+ 
+<footer>
+  <div class="wrap">
+    <div class="foot-row">
+      <div class="foot-brand">
+        <svg class="mark" viewBox="0 0 40 40" fill="none">
+          <path d="M8 6L16 16H24L32 6L28 20L34 26L26 24L20 34L14 24L6 26L12 20L8 6Z" fill="#f07818"/>
+          <circle cx="20" cy="21" r="3" fill="#0e0e0f"/>
+        </svg>
+        HexaFoxx Client
+      </div>
+      <div class="foot-links">
+        <a href="#download">Download</a>
+        <a href="#top">Back to top</a>
+      </div>
+    </div>
+    <div class="foot-disclaim">HexaFoxx Client is an independent Minecraft launcher. Not affiliated with Mojang Studios or Microsoft.</div>
+  </div>
+</footer>
+ 
+<script>
+(function(){
+  var labels = ["Home","How to Use","Edition","Users","Mods","Instances","Settings","Credits"];
+  var slides = document.querySelectorAll('#slideshow .slide');
+  var dotsWrap = document.getElementById('ss-dots');
+  var labelEl = document.getElementById('ss-label');
+  var i = 0, timer;
+
+  labels.forEach(function(_, idx){
+    var d = document.createElement('button');
+    d.className = 'ss-dot' + (idx === 0 ? ' active' : '');
+    d.setAttribute('aria-label', 'Go to slide ' + (idx + 1));
+    d.addEventListener('click', function(){ show(idx); reset(); });
+    dotsWrap.appendChild(d);
+  });
+  var dots = dotsWrap.querySelectorAll('.ss-dot');
+
+  function show(n){
+    slides[i].classList.remove('active');
+    dots[i].classList.remove('active');
+    i = (n + slides.length) % slides.length;
+    slides[i].classList.add('active');
+    dots[i].classList.add('active');
+    labelEl.textContent = labels[i];
+  }
+  function reset(){
+    clearTimeout(timer);
+    timer = setTimeout(function(){ show(i + 1); reset(); }, 4000);
+  }
+  window.ssMove = function(dir){ show(i + dir); reset(); };
+  reset();
+})();
+</script>
+</body>
+</html>
+ 
